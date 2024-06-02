@@ -2,12 +2,10 @@
 
 MicroServer::MicroServer(unsigned int port) {
   server = new ESP8266WebServer(port);
-  // middleware_context = new MiddlewareContext();
 
   view_controller = new ViewController(*server);
   base_controller = new BaseController(*server);
-  // config_controller = new ConfigController(*server);
-  // middleware_chain = new MiddlewareChain({ new JsonMiddleware() });
+  config_controller = new ConfigController(*server);
 }
 
 MicroServer::~MicroServer() {
@@ -20,8 +18,8 @@ MicroServer::~MicroServer() {
   delete base_controller;
   base_controller = nullptr;
 
-  // delete config_controller;
-  // config_controller = nullptr;
+  delete config_controller;
+  config_controller = nullptr;
 }
 
 void MicroServer::on_setup() {
@@ -46,6 +44,11 @@ void MicroServer::on_setup() {
 
   setup_routes();
 
+  const char* header_keys[] = {"Content-Type"};
+  size_t header_keys_size = sizeof(header_keys) / sizeof(char*);
+
+  server->collectHeaders(header_keys, header_keys_size);
+
   server->serveStatic("/static", LittleFS, "/static");
   server->begin();
   Serial.println("HTTP server started.");
@@ -59,7 +62,7 @@ void MicroServer::on_loop() {
 void MicroServer::setup_routes() {
   view_controller->setup_routes();
   base_controller->setup_routes();
-  // config_controller->setup_routes();
+  config_controller->setup_routes();
 }
 
 void MicroServer::register_mDNS(const char* url) {

@@ -35,9 +35,6 @@ private:
   BaseController* base_controller;
   ViewController* view_controller;
   ConfigController* config_controller;
-
-  MiddlewareChain* middleware_chain;
-  MiddlewareContext* middleware_context;
 };
 
 #endif
