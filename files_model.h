@@ -8,7 +8,7 @@ class Files {
 public:
   static Files& get_instance();
   bool save_file(const String& path, const uint8_t* data, size_t len);
-  bool write_to_file();
+  bool write_to_file(const String& path, const String data);
   String read_file(const String& path);
   File get_file(const String& path);
   bool delete_file(const String& path);

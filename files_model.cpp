@@ -22,10 +22,6 @@ void Files::init_littlefs() {
   }
 }
 
-bool Files::write_to_file() {
-  return true;
-}
-
 bool Files::save_file(const String& path, const uint8_t* data, size_t len) {
   const auto available_space = get_available_space();
 
@@ -38,9 +34,6 @@ bool Files::save_file(const String& path, const uint8_t* data, size_t len) {
   }
 
   File file = LittleFS.open(path, "a");
-  const String result = (bool(file) ? "true" : "false");
-
-  Serial.println("File: " + result + path);
 
   if (!file) {
     return false;
@@ -53,6 +46,33 @@ bool Files::save_file(const String& path, const uint8_t* data, size_t len) {
 
     return written == len;
   }
+
+  file.close();
+
+  return true;
+}
+
+bool Files::write_to_file(const String &path, const String data) {
+  const auto available_space = get_available_space();
+
+  if (available_space < data.length()) {
+    Serial.println("Sorry, there is no available space");
+
+    return false;
+  }
+
+  File file = LittleFS.open(path, "w");
+
+  if (!file) {
+    Serial.println("Failed to open config file for writing");
+    return false;
+  }
+
+  uint8_t buf[data.length()];
+
+  data.getBytes(buf, data.length());
+
+  file.write(buf, data.length());
 
   file.close();
 

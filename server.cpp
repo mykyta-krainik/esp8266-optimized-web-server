@@ -23,6 +23,8 @@ MicroServer::~MicroServer() {
 }
 
 void MicroServer::on_setup() {
+  ESP8266WiFiMulti wifi_multi;
+
   Serial.begin(115200);
 
   if (!init_fs()) {
@@ -55,6 +57,14 @@ void MicroServer::on_setup() {
 }
 
 void MicroServer::on_loop() {
+  ESP8266WiFiMulti wifi_multi;
+
+  if (wifi_multi.run() != WL_CONNECTED) {
+    Serial.println("WiFi not connected!");
+  } else {
+    Serial.println("WiFi connected");
+  }
+
   server->handleClient();
   MDNS.update();
 }
@@ -76,7 +86,8 @@ void MicroServer::register_mDNS(const char* url) {
 }
 
 bool MicroServer::connect_to_wifi() {
-  ESP8266WiFiMulti wifiMulti;
+  ESP8266WiFiMulti wifi_multi;
+
   File configFile = LittleFS.open("/static/wifi_config.json", "r");
 
   if (!configFile) {
@@ -86,21 +97,25 @@ bool MicroServer::connect_to_wifi() {
 
   size_t size = configFile.size();
   std::unique_ptr<char[]> buf(new char[size]);
+
   configFile.readBytes(buf.get(), size);
 
   JsonDocument doc;
+
   deserializeJson(doc, buf.get());
+
   JsonArray array = doc["networks"];
 
   for (JsonObject obj : array) {
     const char* ssid = obj["ssid"];
     const char* password = obj["password"];
-    wifiMulti.addAP(ssid, password);
+
+    wifi_multi.addAP(ssid, password);
   }
 
   Serial.println("Connecting to Wi-Fi...");
 
-  while (wifiMulti.run() != WL_CONNECTED) {
+  while (wifi_multi.run() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }

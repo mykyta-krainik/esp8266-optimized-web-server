@@ -8,6 +8,7 @@
 #include "middleware_chain.h"
 #include "middleware_context.h"
 #include "json_middleware.h"
+#include "wifi_config_model.h"
 
 class ConfigController {
 public:
@@ -16,6 +17,7 @@ public:
 
 private:
   ESP8266WebServer& server;
+  WifiConfig wifi_config;
 
   MiddlewareChain* middlewares;
   MiddlewareContext* context;

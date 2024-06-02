@@ -13,46 +13,52 @@ void ConfigController::setup_routes() {
 }
 
 void ConfigController::handle_get_config_page() {
-  String path = "/static/base.html.gz";
-
-  Serial.println(Files::get_instance().file_exists(path));
+  String path = "/static/config.html.gz";
 
   if (Files::get_instance().file_exists(path)) {
     File html_base = Files::get_instance().get_file(path);
-
-    Serial.println("You are here");
-
-    server.streamFile<File>(html_base, "text/html");
-
-    return;
+    server.streamFile(html_base, "text/html");
+  } else {
+    server.sendHeader("Location", "/", true);
+    server.send(307, "text/plain", "Configuration page not found");
+    server.client().stop();
   }
-
-  server.sendHeader("Location", "/", true);
-  server.send(307, "text/plain", "Oops, there is no base file for working with upload");
 }
 
 void ConfigController::handle_get_wifi() {
-  server.send(200, "text/plain", "Ok GET /config");
+  String wifi_configurations = wifi_config.get_all_networks();
+
+  server.send(200, "application/json", wifi_configurations);
+  server.client().stop();
 }
 
 void ConfigController::handle_patch_wifi() {
   middlewares->execute(server, *context);
 
-  const char* abc = context->jsonDoc["abc"];
+  const char* ssid = context->jsonDoc["ssid"];
+  const char* password = context->jsonDoc["password"];
 
-  Serial.println(abc);
+  if (wifi_config.update_network(ssid, password)) {
+    server.send(200, "text/plain", "Wi-Fi configuration updated");
+    server.client().stop();
 
-  server.send(200, "text/plain", "Ok GET /config");
+    return;
+  }
+
+  server.send(500, "text/plain", "Failed to update Wi-Fi configuration");
+  server.client().stop();
 }
 
 void ConfigController::handle_delete_wifi() {
-  for (int i = 0; i < server.args(); i++) {
-    Serial.print("Name: ");
-    Serial.println(server.argName(i));
+  String ssid = server.arg("ssid");
 
-    Serial.print("Value: ");
-    Serial.println(server.arg(i));
+  if (wifi_config.remove_network(ssid.c_str())) {
+    server.send(200, "text/plain", "Wi-Fi network removed");
+    server.client().stop();
+
+    return;
   }
 
-  server.send(200, "text/plain", "Ok GET /config");
+  server.send(404, "text/plain", "Network not found");
+  server.client().stop();
 }
