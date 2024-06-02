@@ -3,13 +3,19 @@
 
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WiFiMulti.h>
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 #include "files_model.h"
 #include "view_controller.h"
 #include "base_controller.h"
+#include "config_controller.h"
+#include "middleware_chain.h"
+#include "json_middleware.h"
+#include "middleware_context.h"
 
 class MicroServer {
 public:
@@ -28,7 +34,10 @@ private:
   ESP8266WebServer* server;
   BaseController* base_controller;
   ViewController* view_controller;
-  // TODO: ConfigController* config_controller;
+  ConfigController* config_controller;
+
+  MiddlewareChain* middleware_chain;
+  MiddlewareContext* middleware_context;
 };
 
 #endif
