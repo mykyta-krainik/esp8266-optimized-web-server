@@ -4,7 +4,10 @@ BaseController::BaseController(ESP8266WebServer& serverRef) : server(serverRef) 
 
 void BaseController::setup_routes() {
   server.on("/", HTTP_GET, std::bind(&BaseController::handle_get_upload_page, this));
-  server.on("/", HTTP_POST, std::bind(&BaseController::handle_post_upload_page, this));
+  server.on("/", HTTP_POST, [this]() {
+    server.send(200, "text/plain", "Uploaded");
+    server.client().stop();
+  }, std::bind(&BaseController::handle_post_upload_page, this));
   server.on("/list-files", HTTP_GET, std::bind(&BaseController::handle_get_files_list, this));
   server.onNotFound(std::bind(&BaseController::handle_not_found, this));
 }

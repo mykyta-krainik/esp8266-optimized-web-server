@@ -3,6 +3,7 @@
 
 #include <ESP8266WebServer.h>
 #include <LittleFS.h>
+#include <ESP8266WiFiMulti.h>
 
 #include "files_model.h"
 #include "middleware_chain.h"

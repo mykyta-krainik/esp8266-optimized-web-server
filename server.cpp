@@ -57,14 +57,6 @@ void MicroServer::on_setup() {
 }
 
 void MicroServer::on_loop() {
-  ESP8266WiFiMulti wifi_multi;
-
-  if (wifi_multi.run() != WL_CONNECTED) {
-    Serial.println("WiFi not connected!");
-  } else {
-    Serial.println("WiFi connected");
-  }
-
   server->handleClient();
   MDNS.update();
 }

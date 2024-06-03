@@ -8,6 +8,7 @@ ConfigController::ConfigController(ESP8266WebServer& serverRef) : server(serverR
 void ConfigController::setup_routes() {
   server.on("/config", HTTP_GET, std::bind(&ConfigController::handle_get_config_page, this));
   server.on("/config/wifi", HTTP_GET, std::bind(&ConfigController::handle_get_wifi, this));
+  server.on("/config/wifi", HTTP_POST, std::bind(&ConfigController::handle_patch_wifi, this));
   server.on("/config/wifi", HTTP_PATCH, std::bind(&ConfigController::handle_patch_wifi, this));
   server.on("/config/wifi", HTTP_DELETE, std::bind(&ConfigController::handle_delete_wifi, this));
 }
@@ -18,6 +19,7 @@ void ConfigController::handle_get_config_page() {
   if (Files::get_instance().file_exists(path)) {
     File html_base = Files::get_instance().get_file(path);
     server.streamFile(html_base, "text/html");
+    server.client().stop();
   } else {
     server.sendHeader("Location", "/", true);
     server.send(307, "text/plain", "Configuration page not found");
@@ -42,6 +44,14 @@ void ConfigController::handle_patch_wifi() {
     server.send(200, "text/plain", "Wi-Fi configuration updated");
     server.client().stop();
 
+    ESP8266WiFiMulti wifi_multi;
+
+    if (wifi_multi.run() != WL_CONNECTED) {
+      Serial.println("WiFi not connected!");
+    } else {
+      Serial.println("WiFi connected");
+    }
+
     return;
   }
 
@@ -55,6 +65,14 @@ void ConfigController::handle_delete_wifi() {
   if (wifi_config.remove_network(ssid.c_str())) {
     server.send(200, "text/plain", "Wi-Fi network removed");
     server.client().stop();
+
+    ESP8266WiFiMulti wifi_multi;
+
+    if (wifi_multi.run() != WL_CONNECTED) {
+      Serial.println("WiFi not connected!");
+    } else {
+      Serial.println("WiFi connected");
+    }
 
     return;
   }

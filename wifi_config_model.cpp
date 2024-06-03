@@ -56,7 +56,16 @@ void WifiConfig::save(JsonDocument doc) {
 }
 
 String WifiConfig::get_all_networks() {
-  return Files::get_instance().read_file(file_path);
+  File configFile = LittleFS.open("/static/wifi_config.json", "r");
+
+  if (!configFile) {
+    Serial.println("Failed to open wifi_config.json");
+    return "";
+  }
+
+  String json = configFile.readString();
+
+  return json.substring(0, json.length() - 1) + "}";
 }
 
 bool WifiConfig::update_network(const char* ssid, const char* password) {
