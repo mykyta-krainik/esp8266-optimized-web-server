@@ -16,11 +16,7 @@ void SensorsController::setup_routes() {
     handle_websocket_event(target_ws, client, type, arg, data, len);
   });
 
-  Serial.println("Before adding a handler");
-
   server->addHandler(ws);
-
-  Serial.println("After adding a handler");
 
   server->on("/update", HTTP_GET, [this](AsyncWebServerRequest* request) {
     handle_update_pin(request);
@@ -61,8 +57,6 @@ void SensorsController::notify_clients(pin_t pin, pin_value_t value) {
 
   serializeJson(doc, serialized_doc);
 
-  Serial.println(serialized_doc);
-
   ws->textAll(serialized_doc);
 }
 
@@ -91,7 +85,7 @@ void SensorsController::handle_websocket_message(void *arg, uint8_t *data, size_
 
     pin_t pin = doc["pin"].as<pin_t>();
 
-    if (pins.find(pin) != pins.end()) {
+    if (pins.find(pin) == pins.end()) {
       pins.insert(pin);
     }
   }
