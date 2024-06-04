@@ -11,10 +11,6 @@ ConfigController::~ConfigController() {
 }
 
 void ConfigController::setup_routes() {
-  server->on("/config", HTTP_GET, [this](AsyncWebServerRequest* request) {
-    handle_get_config_page(request);
-  });
-
   server->on("/config/wifi", HTTP_GET, [this](AsyncWebServerRequest* request) {
     handle_get_wifi(request);
   });
@@ -50,6 +46,10 @@ void ConfigController::setup_routes() {
   server->on("/config/wifi", HTTP_DELETE, [this](AsyncWebServerRequest* request) {
     handle_delete_wifi(request);
   });
+
+  server->on("/config", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    handle_get_config_page(request);
+  });
 }
 
 void ConfigController::handle_get_config_page(AsyncWebServerRequest* request) {
@@ -83,14 +83,6 @@ void ConfigController::handle_patch_wifi(AsyncWebServerRequest* request, uint8_t
   if (wifi_config.update_network(ssid, password)) {
     request->send(200, "text/plain", "Wi-Fi configuration updated");
 
-    ESP8266WiFiMulti wifi_multi;
-
-    if (wifi_multi.run() != WL_CONNECTED) {
-      Serial.println("WiFi not connected!");
-    } else {
-      Serial.println("WiFi connected");
-    }
-
     return;
   }
 
@@ -98,8 +90,8 @@ void ConfigController::handle_patch_wifi(AsyncWebServerRequest* request, uint8_t
 }
 
 void ConfigController::handle_delete_wifi(AsyncWebServerRequest* request) {
-  if (request->hasParam("ssid", true)) {
-    String ssid = request->getParam("ssid", true)->value();
+  if (request->hasParam("ssid")) {
+    String ssid = request->getParam("ssid")->value();
 
     if (wifi_config.remove_network(ssid.c_str())) {
       request->send(200, "text/plain", "Wi-Fi network removed");

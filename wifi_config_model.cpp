@@ -65,7 +65,7 @@ String WifiConfig::get_all_networks() {
 
   String json = configFile.readString();
 
-  return json.substring(0, json.length() - 1) + "}";
+  return json.substring(0, json.length() - 1);
 }
 
 bool WifiConfig::update_network(const char* ssid, const char* password) {
