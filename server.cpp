@@ -48,11 +48,7 @@ void MicroServer::on_setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  Serial.println("HERE");
-
   setup_routes();
-
-  Serial.println("AFTER");
 
   sensors_controller->on_setup();
 
