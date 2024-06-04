@@ -161,7 +161,7 @@ void ViewController::handle_get_js(AsyncWebServerRequest* request) {
   if (Files::get_instance().file_exists(path)) {
     File page = LittleFS.open(path, "r");
 
-    AsyncWebServerResponse* response = request->beginResponse(page, path, "text/js");
+    AsyncWebServerResponse* response = request->beginResponse(page, path, "text/javascript");
 
     response->addHeader("Content-Encoding", "gzip");
 

@@ -13,6 +13,7 @@
 #include "view_controller.h"
 #include "base_controller.h"
 #include "config_controller.h"
+#include "sensors-controller.h"
 #include "middleware_chain.h"
 #include "json_middleware.h"
 #include "middleware_context.h"
@@ -35,6 +36,7 @@ private:
   BaseController* base_controller;
   ViewController* view_controller;
   ConfigController* config_controller;
+  SensorsController* sensors_controller;
 };
 
 #endif

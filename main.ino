@@ -7,5 +7,9 @@ void setup() {
 }
 
 void loop() {
+  Serial.println("Before on_loop");
+
   server.on_loop();
+
+  Serial.println("After on_loop");
 }

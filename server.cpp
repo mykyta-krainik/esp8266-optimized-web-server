@@ -6,6 +6,7 @@ MicroServer::MicroServer(uint16_t port) {
   view_controller = new ViewController(server);
   base_controller = new BaseController(server);
   config_controller = new ConfigController(server);
+  sensors_controller = new SensorsController(server);
 }
 
 MicroServer::~MicroServer() {
@@ -20,6 +21,9 @@ MicroServer::~MicroServer() {
 
   delete config_controller;
   config_controller = nullptr;
+
+  delete sensors_controller;
+  sensors_controller = nullptr;
 }
 
 void MicroServer::on_setup() {
@@ -44,7 +48,13 @@ void MicroServer::on_setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
+  Serial.println("HERE");
+
   setup_routes();
+
+  Serial.println("AFTER");
+
+  sensors_controller->on_setup();
 
   server->serveStatic("/static", LittleFS, "/static").setDefaultFile("index.html.gz");
   server->begin();
@@ -52,6 +62,8 @@ void MicroServer::on_setup() {
 }
 
 void MicroServer::on_loop() {
+  sensors_controller->on_loop();
+
   MDNS.update();
 }
 
@@ -59,6 +71,7 @@ void MicroServer::setup_routes() {
   view_controller->setup_routes();
   base_controller->setup_routes();
   config_controller->setup_routes();
+  sensors_controller->setup_routes();
 }
 
 void MicroServer::register_mDNS(const char* url) {
