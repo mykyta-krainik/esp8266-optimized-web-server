@@ -1,7 +1,7 @@
 #ifndef MIDDLEWARE_H
 #define MIDDLEWARE_H
 
-#include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 #include <initializer_list>
 
@@ -17,7 +17,7 @@ public:
     next = n;
   }
 
-  virtual bool handle(ESP8266WebServer& server, MiddlewareContext& context) = 0;
+  virtual bool handle(AsyncWebServerRequest* request, MiddlewareContext& context, uint8_t* data) = 0;
 };
 
 #endif

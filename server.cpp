@@ -1,11 +1,11 @@
 #include "server.h"
 
-MicroServer::MicroServer(unsigned int port) {
-  server = new ESP8266WebServer(port);
+MicroServer::MicroServer(uint16_t port) {
+  server = new AsyncWebServer(port);
 
-  view_controller = new ViewController(*server);
-  base_controller = new BaseController(*server);
-  config_controller = new ConfigController(*server);
+  view_controller = new ViewController(server);
+  base_controller = new BaseController(server);
+  config_controller = new ConfigController(server);
 }
 
 MicroServer::~MicroServer() {
@@ -46,18 +46,12 @@ void MicroServer::on_setup() {
 
   setup_routes();
 
-  const char* header_keys[] = {"Content-Type"};
-  size_t header_keys_size = sizeof(header_keys) / sizeof(char*);
-
-  server->collectHeaders(header_keys, header_keys_size);
-
-  server->serveStatic("/static", LittleFS, "/static");
+  server->serveStatic("/static", LittleFS, "/static").setDefaultFile("index.html.gz");
   server->begin();
   Serial.println("HTTP server started.");
 }
 
 void MicroServer::on_loop() {
-  server->handleClient();
   MDNS.update();
 }
 

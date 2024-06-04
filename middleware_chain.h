@@ -1,7 +1,7 @@
 #ifndef MIDDLEWARE_CHAIN_H
 #define MIDDLEWARE_CHAIN_H
 
-#include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <initializer_list>
 
 #include "middleware.h"
@@ -27,9 +27,9 @@ public:
     tail = mw;
   }
 
-  bool execute(ESP8266WebServer& server, MiddlewareContext& context) {
+  bool execute(AsyncWebServerRequest* request, MiddlewareContext& context, uint8_t* data) {
     if (head) {
-      return head->handle(server, context);
+      return head->handle(request, context, data);
     }
 
     return false;

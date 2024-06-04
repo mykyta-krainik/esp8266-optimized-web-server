@@ -68,12 +68,11 @@ bool Files::write_to_file(const String &path, const String data) {
     return false;
   }
 
-  uint8_t buf[data.length()];
+  size_t buf_length = data.length() + 1;
+  uint8_t buf[buf_length];
 
-  data.getBytes(buf, data.length());
-
-  file.write(buf, data.length());
-
+  data.getBytes(buf, buf_length);
+  file.write(buf, buf_length);
   file.close();
 
   return true;

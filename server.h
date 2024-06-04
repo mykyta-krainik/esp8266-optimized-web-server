@@ -1,7 +1,7 @@
 #ifndef MICRO_SERVER_H
 #define MICRO_SERVER_H
 
-#include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266WiFi.h>
@@ -19,7 +19,7 @@
 
 class MicroServer {
 public:
-  MicroServer(unsigned int port = 80);
+  MicroServer(uint16_t port = 80);
   ~MicroServer();
 
   void on_setup();
@@ -31,7 +31,7 @@ public:
   bool init_fs();
 
 private:
-  ESP8266WebServer* server;
+  AsyncWebServer* server;
   BaseController* base_controller;
   ViewController* view_controller;
   ConfigController* config_controller;

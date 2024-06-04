@@ -6,27 +6,27 @@
 
 class JsonMiddleware : public Middleware {
 public:
-  bool handle(ESP8266WebServer& server, MiddlewareContext& context) override {
-    if (server.header("Content-Type") != "application/json") {
+  bool handle(AsyncWebServerRequest* request, MiddlewareContext& context, uint8_t* data) override {
+    if (!request->contentType().equalsIgnoreCase("application/json")) {
       if (next) {
-        return next->handle(server, context);
+        return next->handle(request, context, data);
       }
 
       return true;
     }
 
-    DeserializationError error = deserializeJson(context.jsonDoc, server.arg("plain"));
+    DeserializationError error = deserializeJson(context.jsonDoc, (char*)data);
 
     if (error) {
       Serial.println("Deserialization error: " + String(error.c_str()));
 
-      server.send(400, "text/plain", error.c_str());
+      request->send(400, "text/plain", error.c_str());
 
       return false;
     }
 
     if (next) {
-      return next->handle(server, context);
+      return next->handle(request, context, data);
     }
 
     return true;

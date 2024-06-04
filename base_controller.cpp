@@ -1,41 +1,60 @@
 #include "base_controller.h"
 
-BaseController::BaseController(ESP8266WebServer& serverRef) : server(serverRef) {}
+BaseController::BaseController(AsyncWebServer* serverRef) : server(serverRef) {}
 
 void BaseController::setup_routes() {
-  server.on("/", HTTP_GET, std::bind(&BaseController::handle_get_upload_page, this));
-  server.on("/", HTTP_POST, [this]() {
-    server.send(200, "text/plain", "Uploaded");
-    server.client().stop();
-  }, std::bind(&BaseController::handle_post_upload_page, this));
-  server.on("/list-files", HTTP_GET, std::bind(&BaseController::handle_get_files_list, this));
-  server.onNotFound(std::bind(&BaseController::handle_not_found, this));
+  server->on("/", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    handle_get_upload_page(request);
+  });
+
+  server->on(
+    "/",
+    HTTP_POST,
+    [](AsyncWebServerRequest* request) {
+      request->send(200, "text/plain", "Uploaded");
+    },
+    [this](AsyncWebServerRequest* request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+      handle_upload_file("/static/base.html.gz", {".html.gz"}, request, filename, index, data, len, final);
+    }
+  );
+
+  server->on("/list-files", HTTP_GET, [this](AsyncWebServerRequest* request) {
+    handle_get_files_list(request);
+  });
+
+  server->onNotFound([this](AsyncWebServerRequest* request) {
+    handle_not_found(request);
+  });
 }
 
 bool BaseController::is_file_type_valid(const String& filename, std::vector<const char*> acceptable_file_types) {
-  for (size_t i = 0; i < acceptable_file_types.size(); i++) {
-    if (filename.endsWith(acceptable_file_types[i])) {
-      return true;
+  for (const auto& file_type : acceptable_file_types) {
+    if (filename.endsWith(file_type)) {
+        return true;
     }
   }
 
   return false;
 }
 
-void BaseController::handle_upload_file(const String& path_to_save, std::vector<const char*> valid_types) {
-  HTTPUpload& upload = server.upload();
+void BaseController::handle_upload_file(
+  const String& path_to_save,
+  std::vector<const char*> valid_types,
+  AsyncWebServerRequest *request,
+  const String& filename,
+  size_t index,
+  uint8_t *data,
+  size_t len,
+  bool final
+) {
+  if (!is_file_type_valid(filename, valid_types)) {
+    request->send(415, "text/plain", "Unsupported file type");
+    return;
+  }
 
-  if (upload.status == UPLOAD_FILE_START) {
-    if (!is_file_type_valid(upload.filename, valid_types)) {
-      server.send(415, "text/plain", "Unsupported file type");
-      server.client().stop();
-
-      return;
-    }
-
-    if (!Files::get_instance().has_enough_space(upload.contentLength)) {
-      server.send(413, "text/plain", "File is too large");
-      server.client().stop();
+  if (index == 0) {
+    if (!Files::get_instance().has_enough_space(request->contentLength())) {
+      request->send(413, "text/plain", "File is too large");
 
       return;
     }
@@ -43,52 +62,40 @@ void BaseController::handle_upload_file(const String& path_to_save, std::vector<
     if (Files::get_instance().file_exists(path_to_save)) {
       Files::get_instance().delete_file(path_to_save);
     }
-
-    if (!Files::get_instance().file_exists(path_to_save)) {
-      Files::get_instance().save_file(path_to_save, nullptr, 0);
-    }
   }
 
-  if (upload.status == UPLOAD_FILE_WRITE) {
-    Files::get_instance().save_file(path_to_save, upload.buf, upload.currentSize);
-  }
+  Files::get_instance().save_file(path_to_save, data, len);
 
-  if (upload.status == UPLOAD_FILE_END) {
+  if (final) {
     File page = Files::get_instance().get_file(path_to_save);
 
-    if (page && page.size() != upload.totalSize) {
+    if (!page || page.size() != request->contentLength()) {
       Files::get_instance().delete_file(path_to_save);
 
-      server.send(500, "text/plain", "Failed saving: Uploaded file has been corrupted");
-      server.client().stop();
+      request->send(500, "text/plain", "Failed saving: Uploaded file has been corrupted");
     }
   }
 }
 
-void BaseController::handle_get_upload_page() {
+void BaseController::handle_get_upload_page(AsyncWebServerRequest* request) {
   String path = "/static/base.html.gz";
-
-  Serial.println(Files::get_instance().file_exists(path));
 
   if (Files::get_instance().file_exists(path)) {
     File html_base = Files::get_instance().get_file(path);
 
-    Serial.println("You are here");
+    AsyncWebServerResponse* response = request->beginResponse(html_base, path, "text/html");
 
-    server.streamFile<File>(html_base, "text/html");
+    response->addHeader("Content-Encoding", "gzip");
+
+    request->send(response);
 
     return;
   }
 
-  server.sendHeader("Location", "/config", true);
-  server.send(404, "text/plain", "Oops, there is no base file for working with upload");
+  request->redirect("/config");
 }
 
-void BaseController::handle_post_upload_page() {
-  handle_upload_file("/static/base.html.gz", { ".html.gz" });
-}
-
-void BaseController::handle_get_files_list() {
+void BaseController::handle_get_files_list(AsyncWebServerRequest* request) {
   Dir dir = LittleFS.openDir("/static");
   String fileNames = "<h1>Stored Files</h1><ul>";
   
@@ -98,11 +105,9 @@ void BaseController::handle_get_files_list() {
 
   fileNames += "</ul>";
 
-  server.send(200, "text/html", fileNames);
-  server.client().stop();
+  request->send(200, "text/html", fileNames);
 }
 
-void BaseController::handle_not_found() {
-  server.sendHeader("Location", "/", true);
-  server.send(302, "text/plain", "No HTML file found.");
+void BaseController::handle_not_found(AsyncWebServerRequest* request) {
+  request->redirect("/");
 }
